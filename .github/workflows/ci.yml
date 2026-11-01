@@ -1,0 +1,26 @@
+name: C++ build and tests
+on:
+  push:
+  pull_request:
+jobs:
+  test:
+    strategy:
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Configure
+        run: cmake -S . -B build -DCMAKE_BUILD_TYPE=Debug
+      - name: Build
+        run: cmake --build build --config Debug --parallel
+      - name: Test
+        run: ctest --test-dir build -C Debug --output-on-failure
+  sanitizers:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build with ThreadSanitizer
+        run: g++ -std=c++17 -g -O1 -pthread -fsanitize=thread -Iinclude src/engine.cpp tests/engine_tests.cpp -o rideflow_tests
+      - name: Check data races
+        run: ./rideflow_tests
